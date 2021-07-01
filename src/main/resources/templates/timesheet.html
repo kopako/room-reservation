@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" lang="EN">
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>Timesheet</title>
+    <!--    <link rel="stylesheet" href="../static/css/timesheet.css" th:href="@{/css/timesheet.css}" th:inline="css"/>-->
+    <style th:inline="css">
+
+
+        @media screen and (min-width: 700px) {
+            .schedule {
+                display: grid;
+                grid-gap: 1em;
+                line-height: normal;
+                grid-template-rows:
+                    [rooms] auto [# th:each="ts : ${timeGrid}" ]
+                    [ time-[(${#dates.format(ts,'HHmm')})] ] 1fr
+                    [/];
+                grid-template-columns:
+                    [times] 4em [# th:each = "room : ${allRooms}" ]
+                    [ [(${#strings.toLowerCase(room.name)})]-[(${room.id})] ] 1fr
+                    [/];
+            }
+        }
+
+        [# th:each = "room : ${allRooms}" ]
+        .[(${#strings.toLowerCase(room.name)})]-[(${room.id})]
+        {
+            background-color: [(${room.backgroundColor})];
+            color: #fff;
+        }
+        [/]
+
+        .time-slot {
+            grid-column: times;
+        }
+
+        .room-slot {
+            display: none; /* hidden on small screens and browsers without grid support */
+        }
+
+        @supports ( display:grid ) {
+            @media screen and (min-width: 700px) {
+                .room-slot {
+                    display: block;
+                    padding: 10px 5px 5px;
+                    position: sticky;
+                    top: 0;
+                    z-index: 1000;
+                    background-color: rgba(255, 255, 255, .9);
+                }
+            }
+        }
+
+        /* Small-screen & fallback styles */
+        .session {
+            margin-bottom: 1em;
+        }
+
+        @supports ( display:grid ) {
+            @media screen and (min-width: 700px) {
+                .session {
+                    margin: 0;
+                }
+            }
+        }
+
+        body {
+            padding: 50px;
+            max-width: 1100px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+
+        .session {
+            padding: .5em;
+            border-radius: 2px;
+            font-size: 14px;
+            box-shadow: rgba(255, 255, 255, .6) 1px 1px 0,
+            rgba(0, 0, 0, .3) 4px 4px 0;
+        }
+
+        .session-title,
+        .session-time,
+        .session-track,
+        .session-presenter {
+            display: block;
+        }
+
+        .session-title,
+        .time-slot {
+            margin: 0;
+            font-size: 1em;
+        }
+
+        .session-title a {
+            color: #fff;
+            text-decoration-style: dotted;
+        }
+
+        .room-slot,
+        .time-slot {
+            font-weight: bold;
+            font-size: .75em;
+        }
+
+        .track-all {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #ccc;
+            color: #000;
+            box-shadow: none;
+        }
+
+        .text {
+            max-width: 750px;
+            font-size: 18px;
+            margin: 0 auto 50px;
+        }
+
+        .meta {
+            color: #555;
+            font-style: italic;
+        }
+
+        .meta a {
+            color: #555;
+        }
+
+        hr {
+            margin: 40px 0;
+        }
+    </style>
+</head>
+
+<body>
+<h2 id="schedule-heading">Conference Schedule</h2>
+<span th:text="${dateToShow}"></span>
+<div class="schedule" aria-labelledby="schedule-heading"
+     th:unless="${#lists.isEmpty(allReservations)}">
+
+    <th:block th:each="room : ${allRooms}">
+            <span class="room-slot" aria-hidden="true"
+                  th:style="|grid-column: ${#strings.toLowerCase(room.name)}-${room.id}; grid-row: rooms;|"
+                  style="grid-column: track-1; grid-row: rooms;"
+                  th:text="|${room.name} Room|">
+                Room 1
+            </span>
+    </th:block>
+
+    <th:block th:each="time : ${timeGrid}">
+        <h2 class="time-slot"
+            th:style="|grid-row: time-${#dates.format(time,'HHmm')}|"
+            style="grid-row: time-0800;"
+            th:text="${#dates.format(time,'HH:mm')}">8:00am
+        </h2>
+    </th:block>
+
+    <th:block th:each="reservation : ${allReservations}">
+    <div th:object="${reservation}"
+         th:class="|session session-1 *{#strings.toLowerCase(room.name)}-*{room.id}|"
+         class="session session-1 track-1"
+         th:style="|grid-column: *{#strings.toLowerCase(room.name)}-*{room.id}; grid-row: time-*{#dates.format(startReservation,'HHmm')} / time-*{#dates.format(endReservation,'HHmm')};|"
+         style="grid-column: track-1; grid-row: time-0800 / time-0900;">
+        <h3 class="session-title" th:text="*{person.name}"><a href="#">Talk Title</a></h3>
+        <span th:text="|*{#dates.format(startReservation,'HH:mm')}-*{#dates.format(endReservation,'HH:mm')}|"
+              class="session-time">8:00 - 9:00</span>
+        <span class="session-track">Track: 1</span>
+        <span class="session-presenter">Presenter</span>
+    </div>
+    </th:block>
+</div>
+</body>
+</html>
